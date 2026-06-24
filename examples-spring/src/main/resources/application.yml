@@ -1,0 +1,17 @@
+server:
+  port: 8080
+
+merx:
+  # Token de integração — vem da variável de ambiente MERX_API_KEY.
+  api-key: ${MERX_API_KEY:}
+  # SANDBOX (default) ou PRODUCTION.
+  environment: ${MERX_ENV:SANDBOX}
+  # Opcionais (caem nos defaults do SDK se ausentes):
+  # max-retries: 3
+  # connect-timeout-seconds: 5
+  # read-timeout-seconds: 30
+
+logging:
+  level:
+    com.cooperativa.demo: INFO
+    com.merx.sdk: WARN

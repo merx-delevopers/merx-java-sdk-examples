@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.cooperativa.demo</groupId>
+        <artifactId>merx-java-sdk-examples</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>examples-core</artifactId>
+    <name>examples-core</name>
+    <description>
+        Núcleo compartilhado pelos três exemplos: a jornada de negócio da "Cooperativa Demo" e
+        TODAS as chamadas ao SDK Merx vivem aqui. Os módulos basic/spring/quarkus apenas constroem
+        o MerxClient ao seu modo (lifecycle/config) e expõem/disparam esta jornada.
+        Por concentrar as chamadas, este módulo é também o canário de DX: se ele parar de compilar,
+        a API pública do SDK mudou.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>tech.merx.sdk</groupId>
+            <artifactId>sdk-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- Testes (puros, sem rede): validação dos geradores de CPF/CNPJ e do SampleData. -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.25.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.cooperativa.demo</groupId>
+    <artifactId>merx-java-sdk-examples</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>merx-java-sdk-examples</name>
+    <description>
+        Aplicação de exemplo (fictícia "Cooperativa Demo") integrando com a plataforma Merx via SDK
+        Java oficial (tech.merx.sdk). A MESMA jornada de negócio é implementada em três stacks —
+        Java puro, Spring Boot e Quarkus — para o integrador comparar lado a lado.
+    </description>
+    <url>https://developers.merx.tech</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>11</java.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+
+        <!--
+          Versão do SDK consumida do Maven Central.
+          Para desenvolver contra uma versão ainda não propagada no Central, rode
+          `mvn clean install` no repositório merx-java-sdk para instalá-la no ~/.m2 local.
+        -->
+        <merx-sdk.version>1.0.1</merx-sdk.version>
+
+        <!-- Frameworks: versões que ainda suportam Java 11 (Spring Boot 3 / Quarkus 3 exigem Java 17). -->
+        <spring-boot.version>2.7.18</spring-boot.version>
+        <quarkus.version>2.16.12.Final</quarkus.version>
+
+        <!-- Alinhado ao slf4j que o SDK e o Spring Boot 2.7 usam em runtime (evita binding NOP). -->
+        <slf4j.version>1.7.36</slf4j.version>
+        <exec-maven-plugin.version>3.2.0</exec-maven-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+    </properties>
+
+    <modules>
+        <module>examples-core</module>
+        <module>examples-basic</module>
+        <module>examples-spring</module>
+        <module>examples-quarkus</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SDK Merx -->
+            <dependency>
+                <groupId>tech.merx.sdk</groupId>
+                <artifactId>sdk-api</artifactId>
+                <version>${merx-sdk.version}</version>
+            </dependency>
+
+            <!-- Módulo compartilhado de exemplos (jornada + chamadas ao SDK) -->
+            <dependency>
+                <groupId>com.cooperativa.demo</groupId>
+                <artifactId>examples-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- BOM Spring Boot -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- BOM Quarkus -->
+            <dependency>
+                <groupId>io.quarkus.platform</groupId>
+                <artifactId>quarkus-bom</artifactId>
+                <version>${quarkus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <release>${java.version}</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>${exec-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

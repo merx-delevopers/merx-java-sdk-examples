@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.cooperativa.demo</groupId>
+        <artifactId>merx-java-sdk-examples</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>examples-basic</artifactId>
+    <name>examples-basic</name>
+    <description>
+        Integração em Java puro, sem framework: o MerxClient é construído manualmente e
+        reaproveitado, e a jornada roda num main() de console. Demonstra o caminho mais enxuto
+        para começar a usar o SDK.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.cooperativa.demo</groupId>
+            <artifactId>examples-core</artifactId>
+        </dependency>
+        <!-- Binding SLF4J: imprime os logs da jornada no console. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Default: jornada completa. Sobrescreva com -Dexec.mainClass=... -->
+                    <mainClass>com.cooperativa.demo.basic.App</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
