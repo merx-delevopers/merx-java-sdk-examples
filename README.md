@@ -1,10 +1,45 @@
 # merx-java-sdk-examples
 
-Aplicação de exemplo de integração com a plataforma **Merx** usando o [SDK Java oficial](https://developers.merx.tech) (`tech.merx.sdk`).
+[![build](https://github.com/merx-delevopers/merx-java-sdk-examples/actions/workflows/build.yml/badge.svg)](https://github.com/merx-delevopers/merx-java-sdk-examples/actions/workflows/build.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/tech.merx.sdk/sdk-api?label=sdk-api)](https://central.sonatype.com/artifact/tech.merx.sdk/sdk-api)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-11%2B-orange.svg)](https://adoptium.net/)
 
-Uma empresa fictícia — a **Cooperativa Demo** — executa a **mesma jornada de negócio** em **três stacks** diferentes (Java puro, Spring Boot e Quarkus), para você comparar lado a lado como a integração fica em cada uma.
+Exemplos **executáveis** de integração com a plataforma **Merx** usando o [SDK Java oficial](https://developers.merx.tech) (`tech.merx.sdk`): a **mesma jornada de negócio** — cadastro, compliance e negociação — implementada em **três stacks** (Java puro, Spring Boot e Quarkus), para você comparar lado a lado e copiar o que servir.
 
-> Documentação completa de integração: **https://developers.merx.tech**
+> 📚 Documentação completa de integração: **https://developers.merx.tech**
+
+<details>
+<summary><b>Índice</b></summary>
+
+- [Quickstart](#quickstart)
+- [A jornada de negócio](#a-jornada-de-negócio)
+- [Escolha sua stack](#escolha-sua-stack)
+- [Setup](#setup)
+- [Como rodar](#como-rodar)
+- [Catálogo de referência da SDK](#catálogo-de-referência-da-sdk)
+- [Notas ao rodar no sandbox](#notas-ao-rodar-no-sandbox)
+- [Troubleshooting / FAQ](#troubleshooting--faq)
+- [Tratamento de erros](#tratamento-de-erros)
+- [Contribuindo](#contribuindo)
+- [Links & suporte](#links--suporte)
+- [Licença](#licença)
+
+</details>
+
+## Quickstart
+
+Java 11+, Maven 3.6+ e um token de sandbox ([solicite aqui](#setup)).
+
+```bash
+git clone https://github.com/merx-delevopers/merx-java-sdk-examples.git
+cd merx-java-sdk-examples
+cp .env.example .env                       # preencha MERX_API_KEY
+export MERX_API_KEY=<seu-token-sandbox>    # PowerShell: $env:MERX_API_KEY="<token>"
+mvn -q -pl examples-basic -am compile exec:java
+```
+
+Isso roda a jornada completa em Java puro e imprime um resumo `[ OK ] / [SKIP] / [FAIL]` de cada etapa. O SDK é baixado do Maven Central — nenhum setup extra.
 
 ## A jornada de negócio
 
@@ -17,36 +52,48 @@ As três aplicações rodam exatamente o mesmo fluxo ponta a ponta, exercitando 
 | **Negociação** (order) | compromisso de compra → entrega → releitura → histórico de volume → rastreabilidade |
 | **Mercado** (somente leitura) | cotações em tempo real (DataFeed) + produtividade por CAR/cultura |
 
-Cada etapa é **resiliente**: uma falha pontual no sandbox (ex.: relatório para um CAR fictício) é registrada e a jornada continua, devolvendo um resumo com `✓ ok / ∅ pulados / ✗ falhas`.
+Cada etapa é **resiliente**: uma falha pontual no sandbox (ex.: relatório para um CAR fictício) é registrada e a jornada continua, devolvendo o resumo no fim.
 
-## Estrutura (Maven multi-módulo)
+## Escolha sua stack
+
+A mesma jornada, três estilos de integração. O que muda entre eles é só **como o `MerxClient` é construído** (ciclo de vida/config) e **como a jornada é exposta**.
+
+| Módulo | Stack | O que demonstra | Porta | Como rodar |
+|---|---|---|---|---|
+| `examples-basic` | Java puro (console) | `MerxClient` manual + `main()`, fluxo encadeado explícito | — | `mvn -q -pl examples-basic exec:java` |
+| `examples-spring` | Spring Boot 2.7 (REST) | `MerxClient` `@Bean` + `@Service` + `@RestController` + `@RestControllerAdvice` | 8080 | `mvn -pl examples-spring spring-boot:run` |
+| `examples-quarkus` | Quarkus 2.16 (REST) | `MerxClient` `@Produces` (CDI) + JAX-RS + `ExceptionMapper` | 8081 | `mvn -pl examples-quarkus quarkus:dev` |
+
+> O módulo `examples-core` concentra a jornada e **todas** as chamadas ao SDK (agnóstico de framework) — os três acima só fazem a fiação e a exposição. Por isso o `examples-core` é também o **canário de DX**: se ele parar de compilar, a API pública do SDK mudou.
 
 ```
-merx-java-sdk-examples/        (pom pai)
-├── examples-core/             jornada + TODAS as chamadas ao SDK (fonte única, agnóstica de framework)
-│   └── .../core/catalog/      catálogo de referência: 1 classe por resource client, 1 método por
-│                              endpoint da SDK (todos os ~107 métodos públicos), com Javadoc
-├── examples-basic/            Java puro, console: MerxClient manual + main()
-├── examples-spring/           Spring Boot: MerxClient @Bean + @RestController + @RestControllerAdvice
-└── examples-quarkus/          Quarkus: MerxClient @Produces (CDI) + JAX-RS + ExceptionMapper
+merx-java-sdk-examples/        (pom pai, Maven multi-módulo)
+├── examples-core/             jornada + todas as chamadas ao SDK + catálogo de referência
+├── examples-basic/            Java puro, console
+├── examples-spring/           Spring Boot (REST)
+└── examples-quarkus/          Quarkus (REST)
 ```
 
-> O pacote `core/catalog` (`ProducerExamples`, `OrderCommitmentExamples`, `CbiosExamples`, …) é uma
-> referência copiável de **todos** os endpoints da SDK — compila contra a SDK, então cobre toda a
-> API pública (e quebra o build se a API mudar). Não roda ponta a ponta; para um fluxo executável
-> use a jornada (`CooperativaJourney`).
+## Setup
 
-O `examples-core` concentra as chamadas ao SDK; os outros três módulos só diferem em **como o `MerxClient` é construído** (ciclo de vida/config) e **como a jornada é disparada/exposta**. Por isso o `examples-core` é também o canário de DX: se ele parar de compilar, a API pública do SDK mudou.
+**Requisitos**
 
-## Requisitos
-
-- Java 11+
-- Maven 3.6+
+- Java 11+ · Maven 3.6+
 - Token de API Merx (sandbox) — solicite via `support-api@merx.tech` (assunto: `Chave de Integração - Sandbox`).
 
-## Dependência do SDK
+**Configuração** — copie o template e preencha:
 
-Os exemplos consomem o SDK do **Maven Central**:
+```bash
+cp .env.example .env
+```
+
+| Variável | Obrigatória | Descrição |
+|---|---|---|
+| `MERX_API_KEY` | sim | Token de integração. |
+| `MERX_ENV` | não | `SANDBOX` (default → `homolog.api.merx.tech`) ou `PRODUCTION` (→ `api.merx.tech`). |
+| `MERX_SAMPLE_CAR` | não | CAR **real** do sandbox para os relatórios de carbono retornarem dados. Sem ele, um CAR fictício é usado. |
+
+**Dependência do SDK** — resolvida direto do Maven Central, sem repositório extra:
 
 ```xml
 <dependency>
@@ -56,34 +103,15 @@ Os exemplos consomem o SDK do **Maven Central**:
 </dependency>
 ```
 
-Nenhum repositório extra precisa ser configurado — o SDK é resolvido direto do Maven Central.
-
-## Configuração
-
-Copie o template de variáveis de ambiente e preencha:
-
-```bash
-cp .env.example .env
-```
-
-| Variável | Obrigatória | Descrição |
-|---|---|---|
-| `MERX_API_KEY` | sim | Token de integração (sandbox). |
-| `MERX_ENV` | não | `SANDBOX` (default) ou `PRODUCTION`. |
-| `MERX_SAMPLE_CAR` | não | CAR **real** do sandbox para os relatórios de carbono retornarem dados. Sem ele, um CAR fictício é usado. |
-
-No Windows (PowerShell): `$env:MERX_API_KEY = "<seu-token>"`.
-
 ## Como rodar
 
-Primeiro, faça um build único (instala o `examples-core` no `~/.m2` e compila tudo):
+Build único (compila os 4 módulos e roda os testes do core):
 
 ```bash
-export MERX_API_KEY=<seu-token>
 mvn clean install
 ```
 
-### 1) Java puro (console)
+### Java puro (console)
 
 ```bash
 mvn -q -pl examples-basic exec:java
@@ -96,7 +124,7 @@ mvn -q -pl examples-basic exec:java -Dexec.mainClass=com.cooperativa.demo.basic.
 mvn -q -pl examples-basic exec:java -Dexec.mainClass=com.cooperativa.demo.basic.snippets.ReportsExample
 ```
 
-### 2) Spring Boot (REST, porta 8080)
+### Spring Boot (porta 8080)
 
 ```bash
 mvn -pl examples-spring spring-boot:run
@@ -112,32 +140,41 @@ mvn -pl examples-spring spring-boot:run
 | `GET /api/market/productivity?car=...&culture=SOY&harvest=2024/2025` | Produtividade por CAR/cultura. |
 | `GET /api/car/{code}` | Consulta um CAR. |
 
-Exemplo: `curl -X POST http://localhost:8080/api/journey`
+```bash
+curl -X POST http://localhost:8080/api/journey
+```
 
-### 3) Quarkus (REST, porta 8081)
+### Quarkus (porta 8081)
 
 ```bash
 mvn -pl examples-quarkus quarkus:dev
 ```
 
-As mesmas rotas do Spring, na porta **8081**. Exemplo: `curl -X POST http://localhost:8081/api/journey`
+As mesmas rotas do Spring, na porta **8081** — ex.: `curl -X POST http://localhost:8081/api/journey`.
+
+## Catálogo de referência da SDK
+
+Além da jornada, o pacote `examples-core/.../core/catalog/` é uma **referência copiável de todos os endpoints da SDK**: uma classe por resource client (`ProducerExamples`, `OrderCommitmentExamples`, `CbiosExamples`, …), com **um método por endpoint** (todos os ~107 métodos públicos) e Javadoc PT-BR. Compila contra a SDK, então cobre 100% da API pública (e quebra o build se a API mudar). Não roda ponta a ponta — para um fluxo executável use a jornada (`CooperativaJourney`).
 
 ## Notas ao rodar no sandbox
 
-A jornada é **resiliente**: passos que falham são marcados e o fluxo continua. Algumas etapas
-dependem de **dados de referência reais** da cooperativa do seu token — sem eles, falham de forma
-esperada (e o exemplo segue):
+A jornada é resiliente: passos que falham são marcados e o fluxo continua. Algumas etapas dependem de **dados de referência reais** da cooperativa do seu token — sem eles, falham de forma esperada:
 
 | Etapa | Requer | Sem isso |
 |---|---|---|
 | Fazenda, consulta de CAR, produtividade | Um **CAR real** cadastrado (defina `MERX_SAMPLE_CAR`). | `car.not-found` (o backend valida o CAR contra o SICAR). |
-| Compromisso de compra (negociação) | Uma **safra registrada** na cooperativa (campo `harvest`). | `harvest mandatory`. |
+| Compromisso de compra (negociação) | Uma **safra registrada** na cooperativa (`harvest`). | `harvest mandatory`. |
 | Usuário do produtor (signatário) | Integração **ClickSign** ativa para a cooperativa. | `422 clickSign.unprocessable-entity` (pode ser intermitente no sandbox). |
 
-Em uma execução típica com um token de sandbox novo, o cadastro (produtor/endereço/armazém/local
-de entrega/usuário/carteira), a releitura e os relatórios EUDR/socioambiental retornam `[ OK ]`.
-As etapas acima ficam `[FAIL]`/`[SKIP]` até você fornecer CAR/safra reais. Isso é proposital —
-demonstra justamente o tratamento de erro e a resiliência.
+Com um token de sandbox novo, o cadastro (produtor/endereço/armazém/local de entrega/usuário/carteira), a releitura e os relatórios EUDR/socioambiental tipicamente retornam `[ OK ]`; as etapas acima ficam `[FAIL]`/`[SKIP]` até você fornecer CAR/safra reais. Isso é proposital — demonstra o tratamento de erro e a resiliência.
+
+## Troubleshooting / FAQ
+
+- **`401` / "Authentication refused"** — token inválido, ausente ou de outro ambiente. Confira `MERX_API_KEY` e `MERX_ENV`.
+- **Build falha resolvendo `tech.merx.sdk:sdk-api`** — rode `mvn -U clean install` para forçar atualização de metadados do Maven Central.
+- **`car.not-found` / `harvest mandatory` / `422 clickSign`** — esperado no sandbox sem dados reais; veja [Notas ao rodar no sandbox](#notas-ao-rodar-no-sandbox).
+- **Java 17+ instalado** — o build mira `release 11` e funciona; se houver erro de toolchain, aponte `JAVA_HOME` para um JDK 11. Spring Boot 2.7 / Quarkus 2.16 são usados de propósito (as versões 3.x exigem Java 17).
+- **Windows (PowerShell)** — use `$env:MERX_API_KEY="<token>"` em vez de `export`.
 
 ## Tratamento de erros
 
@@ -147,13 +184,16 @@ O SDK lança uma hierarquia tipada (`MerxApiException` para respostas HTTP de er
 - **Spring** — `@RestControllerAdvice` mapeia para o mesmo status HTTP.
 - **Quarkus** — `ExceptionMapper`s JAX-RS fazem o mesmo.
 
-## Ambientes
+## Contribuindo
 
-- Sandbox: `https://homolog.api.merx.tech` (`Environment.SANDBOX`)
-- Produção: `https://api.merx.tech` (`Environment.PRODUCTION`)
+Issues e PRs são bem-vindos. Abra uma issue descrevendo o caso (ou o endpoint da SDK que falta exemplo) e, para PRs, mantenha as três stacks rodando a **mesma** jornada e adicione ao `catalog/` o método correspondente a qualquer endpoint novo. O build de CI (`mvn clean verify`) precisa passar.
 
-## Links
+## Links & suporte
 
 - SDK Java no Maven Central: [`tech.merx.sdk:sdk-api`](https://central.sonatype.com/artifact/tech.merx.sdk/sdk-api)
 - Portal de integração / documentação: https://developers.merx.tech
 - Suporte: `support-api@merx.tech`
+
+## Licença
+
+Distribuído sob a licença **Apache-2.0** — veja [LICENSE](LICENSE).
