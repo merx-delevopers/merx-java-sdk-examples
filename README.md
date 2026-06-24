@@ -49,7 +49,7 @@ As três aplicações rodam exatamente o mesmo fluxo ponta a ponta, exercitando 
 |---|---|
 | **Cadastro** (baseline + identity) | produtor → endereço → usuário/signatário → fazenda (com CAR) → armazém → local de entrega → carteira; releitura e listagem |
 | **Compliance** (carbono) | relatórios CBIOS, EUDR e socioambiental + consulta de CAR |
-| **Negociação** (order) | compromisso de compra → entrega → releitura → histórico de volume → rastreabilidade |
+| **Negociação** (order) | boleta de compra → entrega → releitura → histórico de volume → rastreabilidade |
 | **Mercado** (somente leitura) | cotações em tempo real (DataFeed) + produtividade por CAR/cultura |
 
 Cada etapa é **resiliente**: uma falha pontual no sandbox (ex.: relatório para um CAR fictício) é registrada e a jornada continua, devolvendo o resumo no fim.
@@ -163,7 +163,7 @@ A jornada é resiliente: passos que falham são marcados e o fluxo continua. Alg
 | Etapa | Requer | Sem isso |
 |---|---|---|
 | Fazenda, consulta de CAR, produtividade | Um **CAR real** cadastrado (defina `MERX_SAMPLE_CAR`). | `car.not-found` (o backend valida o CAR contra o SICAR). |
-| Compromisso de compra (negociação) | Uma **safra registrada** na cooperativa (`harvest`). | `harvest mandatory`. |
+| Boleta de compra (negociação) | Uma **safra registrada** na cooperativa (`harvest`). | `harvest mandatory`. |
 | Usuário do produtor (signatário) | Integração **ClickSign** ativa para a cooperativa. | `422 clickSign.unprocessable-entity` (pode ser intermitente no sandbox). |
 
 Com um token de sandbox novo, o cadastro (produtor/endereço/armazém/local de entrega/usuário/carteira), a releitura e os relatórios EUDR/socioambiental tipicamente retornam `[ OK ]`; as etapas acima ficam `[FAIL]`/`[SKIP]` até você fornecer CAR/safra reais. Isso é proposital — demonstra o tratamento de erro e a resiliência.
