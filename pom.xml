@@ -28,7 +28,7 @@
           Para desenvolver contra uma versão ainda não propagada no Central, rode
           `mvn clean install` no repositório merx-java-sdk para instalá-la no ~/.m2 local.
         -->
-        <merx-sdk.version>1.0.1</merx-sdk.version>
+        <merx-sdk.version>1.1.0</merx-sdk.version>
 
         <!-- Frameworks: versões que ainda suportam Java 11 (Spring Boot 3 / Quarkus 3 exigem Java 17). -->
         <spring-boot.version>2.7.18</spring-boot.version>
